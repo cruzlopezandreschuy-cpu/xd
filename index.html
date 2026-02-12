@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Memorama de Emociones</title>
+<style>
+body{
+  font-family: Arial;
+  text-align: center;
+  background: #e3f2fd;
+}
+h1{
+  color: #1565c0;
+}
+p{
+  max-width: 600px;
+  margin: auto;
+}
+.grid{
+  display: grid;
+  grid-template-columns: repeat(4, 90px);
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.card{
+  width: 90px;
+  height: 90px;
+  background: #42a5f5;
+  color: white;
+  font-size: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.flipped{
+  background: white;
+  color: black;
+  cursor: default;
+}
+</style>
+</head>
+<body>
+
+<h1>🧠 Memorama de Emociones</h1>
+
+<p>
+Este juego ayuda a identificar y reconocer diferentes emociones.
+El jugador debe encontrar las parejas iguales.
+</p>
+
+<h3>Intentos: <span id="moves">0</span></h3>
+
+<div class="grid" id="game"></div>
+
+<script>
+const emotions = [
+"😊 Feliz","😢 Triste","😡 Enojado",
+"😲 Sorprendido","😍 Amor","😨 Miedo",
+"😊 Feliz","😢 Triste","😡 Enojado",
+"😲 Sorprendido","😍 Amor","😨 Miedo"
+];
+
+let shuffled = emotions.sort(() => 0.5 - Math.random());
+
+const game = document.getElementById("game");
+let firstCard = null;
+let secondCard = null;
+let lock = false;
+let moves = 0;
+
+document.getElementById("moves").innerText = moves;
+
+shuffled.forEach((emotion) => {
+  const card = document.createElement("div");
+  card.classList.add("card");
+  card.dataset.emotion = emotion;
+  card.innerText = "?";
+  card.addEventListener("click", flipCard);
+  game.appendChild(card);
+});
+
+function flipCard(){
+  if(lock || this.classList.contains("flipped")) return;
+
+  this.innerText = this.dataset.emotion;
+  this.classList.add("flipped");
+
+  if(!firstCard){
+    firstCard = this;
+    return;
+  }
+
+  secondCard = this;
+  moves++;
+  document.getElementById("moves").innerText = moves;
+
+  if(firstCard.dataset.emotion === secondCard.dataset.emotion){
+    firstCard = null;
+    secondCard = null;
+  } else {
+    lock = true;
+    setTimeout(() => {
+      firstCard.innerText = "?";
+      secondCard.innerText = "?";
+      firstCard.classList.remove("flipped");
+      secondCard.classList.remove("flipped");
+      firstCard = null;
+      secondCard = null;
+      lock = false;
+    }, 900);
+  }
+
+  checkWin();
+}
+
+function checkWin(){
+  const flipped = document.querySelectorAll(".flipped");
+  if(flipped.length === emotions.length){
+    setTimeout(() => {
+      alert("🎉 ¡Felicidades! Completaste el juego en " + moves + " intentos.");
+    }, 300);
+  }
+}
+</script>
+
+</body>
+</html>
