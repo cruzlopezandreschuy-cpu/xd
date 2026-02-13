@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Memoria 3D - Multijugador</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg,#141e30,#243b55);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    color:white;
+}
+
+h1{ margin:15px; }
+
+#menu{
+    margin-bottom:15px;
+}
+
+input{
+    padding:8px;
+    margin:5px;
+    border-radius:8px;
+    border:none;
+}
+
+button{
+    padding:8px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+#game{
+    width:720px;
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap:12px;
+    perspective:1000px;
+}
+
+.card{
+    width:100px;
+    height:130px;
+    position:relative;
+    transform-style:preserve-3d;
+    transition: transform 0.6s;
+    cursor:pointer;
+}
+
+.card.flip{ transform: rotateY(180deg); }
+
+.front,.back{
+    position:absolute;
+    width:100%;
+    height:100%;
+    backface-visibility:hidden;
+    border-radius:12px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:2em;
+}
+
+.front{ background:white; color:black; }
+.back{ background:#f6c23e; transform:rotateY(180deg); }
+
+#info{
+    margin-top:15px;
+    font-size:18px;
+}
+
+#victory{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.85);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    font-size:2em;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎭 Memoria 3D - 2 Jugadores</h1>
+
+<div id="menu">
+    <input type="text" id="p1" placeholder="Jugador 1">
+    <input type="text" id="p2" placeholder="Jugador 2">
+    <button onclick="startGame()">Comenzar</button>
+</div>
+
+<div id="info"></div>
+
+<div id="game"></div>
+
+<div id="victory"></div>
+
+<script>
+const game = document.getElementById("game");
+const info = document.getElementById("info");
+const victory = document.getElementById("victory");
+
+let emociones = [
+"😀","😂","😍","😎","😭","😡",
+"😱","🥶","🥵","😴","🤢","🤩",
+"😇","🤔","😅","😈","🥳","😬"
+];
+
+let cards=[];
+let firstCard=null;
+let secondCard=null;
+let lock=false;
+
+let player1="", player2="";
+let currentPlayer=1;
+let score1=0, score2=0;
+let matches=0;
+
+function shuffle(array){
+    return array.sort(()=>0.5-Math.random());
+}
+
+function startGame(){
+    player1 = document.getElementById("p1").value || "Jugador 1";
+    player2 = document.getElementById("p2").value || "Jugador 2";
+
+    score1=0;
+    score2=0;
+    matches=0;
+    currentPlayer=1;
+
+    victory.style.display="none";
+    game.innerHTML="";
+
+    cards = shuffle([...emociones,...emociones]);
+
+    cards.forEach(emoji=>{
+        const card=document.createElement("div");
+        card.classList.add("card");
+        card.innerHTML=`
+            <div class="front">❓</div>
+            <div class="back">${emoji}</div>
+        `;
+        card.dataset.emoji=emoji;
+        card.addEventListener("click",flipCard);
+        game.appendChild(card);
+    });
+
+    updateInfo();
+}
+
+function updateInfo(){
+    info.innerHTML = `
+    Turno de: <b>${currentPlayer===1?player1:player2}</b><br>
+    ${player1}: ${score1} puntos | ${player2}: ${score2} puntos
+    `;
+}
+
+function flipCard(){
+    if(lock) return;
+    if(this===firstCard) return;
+
+    this.classList.add("flip");
+
+    if(!firstCard){
+        firstCard=this;
+        return;
+    }
+
+    secondCard=this;
+    checkMatch();
+}
+
+function checkMatch(){
+    if(firstCard.dataset.emoji===secondCard.dataset.emoji){
+        if(currentPlayer===1) score1++;
+        else score2++;
+
+        matches++;
+        if(matches===emociones.length){
+            showWinner();
+        }
+        resetTurn();
+    }else{
+        lock=true;
+        setTimeout(()=>{
+            firstCard.classList.remove("flip");
+            secondCard.classList.remove("flip");
+            switchTurn();
+            resetTurn();
+        },1000);
+    }
+}
+
+function switchTurn(){
+    currentPlayer = currentPlayer===1?2:1;
+}
+
+function resetTurn(){
+    [firstCard,secondCard,lock]=[null,null,false];
+    updateInfo();
+}
+
+function showWinner(){
+    victory.style.display="flex";
+
+    let winner="";
+    if(score1>score2) winner=player1;
+    else if(score2>score1) winner=player2;
+    else winner="Empate";
+
+    victory.innerHTML = `
+    🏆 ${winner==="Empate"?"¡Es un empate!":winner+" gana!"} 🏆
+    <button onclick="startGame()">Jugar otra vez</button>
+    `;
+}
+</script>
+
+</body>
+</html>
